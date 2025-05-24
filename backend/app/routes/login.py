@@ -9,10 +9,35 @@ router = APIRouter(prefix="/v1/login", tags=["login"])
 
 @router.post("/admin_login")
 async def admin_login(request_body: AdminLogin):
-    username, password = request_body.username, request_body.password
+    email, password = request_body.username.email, request_body.password
     
     try:
-        user = admins_collection.find_one({"email": username})
+        user = admins_collection.find_one({"email": email})
+        if not user:
+            raise HTTPException(status_code=404, detail="Invalid credentials")
+        
+        if not verify_password(password, user["password"]):
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+        token = create_jwt_token({"email": email})
+        
+        return JSONResponse(
+            content={"success": True, "message": "Login successful", "access_token": token},
+            status_code=200,
+        )
+        
+    except HTTPException as e:
+        raise e
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")
+    
+@router.post("/student-login")
+async def login(request_body: StudentLogin):
+    username, password = request_body.email, request_body.password
+    
+    try:
+        user = students_collection.find_one({"email": username})
         if not user:
             raise HTTPException(status_code=404, detail="Invalid credentials")
         
@@ -23,7 +48,7 @@ async def admin_login(request_body: AdminLogin):
         
         return JSONResponse(
             content={"success": True, "message": "Login successful", "access_token": token},
-            status_code=200,
+            status_code=200
         )
         
     except HTTPException as e:
