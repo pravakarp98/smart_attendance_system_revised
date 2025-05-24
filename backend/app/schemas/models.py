@@ -8,7 +8,7 @@ class AdminSignup(BaseModel):
     role: str
     
 class AdminLogin(BaseModel):
-    username: str
+    email: str
     password: str
     
 class StudentSignup(BaseModel):
